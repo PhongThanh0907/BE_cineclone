@@ -13,3 +13,5 @@ export const EMAIL_APP_PASSWORD = process.env.EMAIL_APP_PASSWORD;
 export const EMAIL_NAME = process.env.EMAIL_NAME;
 
 export const URL_SERVER = process.env.URL_SERVER;
+
+export const URL_CLIENT = process.env.URL_CLIENT;

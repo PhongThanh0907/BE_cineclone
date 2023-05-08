@@ -20,9 +20,9 @@ router.post("/login", loginController);
 
 router.get("/logout", logoutController);
 
-router.get("/forgotpassword", forgotPassword);
-
 router.post("/register", registerController);
+
+router.post("/forgotpassword", forgotPassword);
 
 router.post("/refreshtoken", refreshAccessToken);
 

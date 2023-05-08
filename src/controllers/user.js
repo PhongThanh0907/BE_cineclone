@@ -1,6 +1,5 @@
 import bcrypt from "bcrypt";
 import asyncHandler from "express-async-handler";
-import mongoose from "mongoose";
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import {
@@ -9,14 +8,14 @@ import {
   isAdmin,
 } from "../middlewares/verifyToken.js";
 import UserModel from "../models/User.js";
-import { URL_SERVER } from "../utils/config.js";
+import { URL_CLIENT, URL_SERVER } from "../utils/config.js";
 import { sendMail } from "../utils/sendMail.js";
 
 export const registerController = asyncHandler(async (req, res) => {
-  const { email, password, firstname, lastname } = req.body;
-  if ((!email, !password, !firstname, !lastname))
+  const { email, password, userName } = req.body;
+  if ((!email, !password, !userName))
     return res.status(400).json({
-      message: "Username, password, firstname and lastname are required.",
+      message: "Username, password, email are required.",
     });
 
   const salt = await bcrypt.genSalt(10);
@@ -26,7 +25,7 @@ export const registerController = asyncHandler(async (req, res) => {
     const registeredUser = await UserModel.findOne({ email });
     if (registeredUser)
       return res.status(400).json({
-        message: "Account already exists",
+        message: "Email đã tồn tại",
       });
 
     const newUser = await UserModel.create({
@@ -40,8 +39,7 @@ export const registerController = asyncHandler(async (req, res) => {
       ...newUser._doc,
       token: generateAccessToken({
         _id: newUser._id,
-        firstname: newUser.firstname,
-        lastname: newUser.lastname,
+        userName: newUser.userName,
         email: newUser.email,
         isAdmin: newUser.isAdmin,
       }),
@@ -57,20 +55,20 @@ export const loginController = asyncHandler(async (req, res) => {
 
   if (!email || !password)
     return res.status(400).json({
-      message: "Username and password are required.",
+      message: "Email and password are required.",
     });
 
   try {
     const response = await UserModel.findOne({ email });
     if (!response)
       return res.status(404).json({
-        message: "User not found",
+        message: "Email không hợp lệ",
       });
 
     const isPasswordValid = await bcrypt.compare(password, response.password);
     if (!isPasswordValid)
       return res.status(400).json({
-        message: "password is not correct",
+        message: "Mật khẩu không chính xác",
       });
 
     if (response && isPasswordValid) {
@@ -79,8 +77,7 @@ export const loginController = asyncHandler(async (req, res) => {
 
       const accessToken = generateAccessToken({
         _id: response._id,
-        firstname: response.firstname,
-        lastname: response.lastname,
+        userName: response.userName,
         email: response.email,
         isAdmin: response.isAdmin,
       });
@@ -224,7 +221,7 @@ export const logoutController = asyncHandler(async (req, res) => {
 });
 
 export const forgotPassword = asyncHandler(async (req, res) => {
-  const { email } = req.query;
+  const { email } = req.body;
   if (!email)
     return res.status(400).json({
       message: "Email is required",
@@ -232,11 +229,11 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   const user = await UserModel.findOne({ email });
   if (!user)
     return res.status(404).json({
-      message: "User not found",
+      message: "Không tìm thấy user",
     });
   const resetToken = user.createPasswordChangedToken();
   await user.save();
-  const html = `Xin vui lòng click vào link dưới đây để thay đổi mật khẩu của bạn.Link này sẽ hết hạn sau 15 phút kể từ bây giờ. <a href=${URL_SERVER}api/user/resetpassword/${resetToken}>Click here</a>`;
+  const html = `Xin vui lòng click vào link dưới đây để thay đổi mật khẩu của bạn.Link này sẽ hết hạn sau 15 phút kể từ bây giờ. <a href=${URL_CLIENT}resetpassword/${resetToken}>Click here</a>`;
 
   const data = {
     email,
@@ -246,7 +243,9 @@ export const forgotPassword = asyncHandler(async (req, res) => {
 
   return res.status(200).json({
     success: true,
-    rs,
+    message: rs.response?.includes("OK")
+      ? "Hãy check mail của bạn"
+      : "Đã có lỗi, hãy thử lại sau",
   });
 });
 
@@ -271,6 +270,8 @@ export const resetPassword = asyncHandler(async (req, res) => {
   await user.save();
   return res.status(200).json({
     success: user ? true : false,
-    message: user ? "Updated password" : "Something went wrong",
+    message: user
+      ? "Thay đổi mật khẩu thành công"
+      : "Xảy ra lỗi xin vui lòng thử lại",
   });
 });

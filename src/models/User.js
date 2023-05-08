@@ -4,13 +4,9 @@ export const emailValid = /^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/;
 
 const UserSchema = new mongoose.Schema(
   {
-    firstname: {
+    userName: {
       type: String,
-      required: true,
-    },
-    lastname: {
-      type: String,
-      required: true,
+      require: true,
     },
     email: {
       type: String,
@@ -19,6 +15,12 @@ const UserSchema = new mongoose.Schema(
       min: [6, "Email must be at least 6 characters"],
       max: [50, "Email must be less then 50 characters"],
       match: [emailValid, "Please add a valid email"],
+    },
+    birthDay: {
+      type: String,
+    },
+    gender: {
+      type: String,
     },
     password: {
       type: String,
@@ -37,7 +39,9 @@ const UserSchema = new mongoose.Schema(
       default: false,
       require: true,
     },
-    address: [{ type: mongoose.Types.ObjectId, ref: "Address" }],
+    address: {
+      type: String,
+    },
     wishlist: [{ type: mongoose.Types.ObjectId, ref: "Movie" }],
     isBlocked: {
       type: Boolean,
@@ -53,6 +57,9 @@ const UserSchema = new mongoose.Schema(
       type: String,
     },
     passwordResetExpires: {
+      type: String,
+    },
+    registerToken: {
       type: String,
     },
   },
